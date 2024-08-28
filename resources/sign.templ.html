@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+</head>
+<body>
+<div id="app" style="padding: 10px 20px">
+    <el-row>
+        <el-col :span="24"><h3>待签名交易</h3></el-col>
+    </el-row>
+    <el-row>
+        <template>
+            <el-table :data="txs" style="width: 100%">
+                <el-table-column
+                        prop="id"
+                        label="ID"
+                        width="100">
+                </el-table-column>
+                <el-table-column
+                        label="To/说明"
+                        width="380">
+                    <template slot-scope="scope">
+                        <span style="color:#409EFF">${scope.row.to }</span>
+                            <br>
+                        <span style="color:#909399">${scope.row.ps }</span>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        prop="method"
+                        label="Method">
+                </el-table-column>
+                <el-table-column
+                        prop="mount"
+                        label="金额">
+                </el-table-column>
+                <el-table-column
+                        prop="approved"
+                        label="Approved">
+                </el-table-column>
+
+                <el-table-column label="操作">
+                    <el-button type="primary" size="mini" plain>批准</el-button>
+                </el-table-column>
+            </el-table>
+        </template>
+    </el-row>
+
+<!--    <el-button @click="visible = true">Button</el-button>-->
+<!--    <el-dialog :visible.sync="visible" title="Hello world">-->
+<!--        <p>Try Element</p>-->
+<!--    </el-dialog>-->
+</div>
+</body>
+<!-- import Vue before Element -->
+<script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<!-- import JavaScript -->
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script>
+    window.onload = function() {
+        new Vue({
+            el: '#app',
+            delimiters: ['${', '}'],
+            data: function () {
+                return {
+                    account: "{{.account}}",
+                    visible: false,
+                    txs: []
+                }
+            },
+            created: function() {
+                this.getTxs();
+            },
+            methods: {
+                getTxs: function () {
+                    var _this = this;
+                    //发送 post 请求
+                    axios.post('/sign/txs/' + this.account)
+                        .then(function (response){
+                            _this.txs = response.data
+                            console.log("txs:" + _this.txs)
+                        })
+                        .catch(function (error) { // 请求失败处理
+                            console.log(error);
+                        });
+                }
+            }
+        })
+    }
+</script>
+</html>
