@@ -7,6 +7,7 @@ import (
 	"html"
 	"io"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -137,6 +138,10 @@ func signTxs(c *gin.Context) {
 			txs[i].TxId = v
 		}
 	}
+
+	sort.Slice(txs, func(i, j int) bool {
+		return txs[i].Id > txs[j].Id
+	})
 	c.IndentedJSON(http.StatusOK, txs)
 }
 
