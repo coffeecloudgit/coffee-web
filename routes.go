@@ -16,6 +16,7 @@ import (
 )
 
 var signedTxMaps = make(map[string]string)
+var minFil = 0.0001
 
 func rateLimit(c *gin.Context) {
 	ip := c.ClientIP()
@@ -117,6 +118,15 @@ func signGET(c *gin.Context) {
 	})
 }
 
+func signActorAddress(c *gin.Context) {
+	address := c.Param("address")
+	actorAddress, err := fil.GetActorAddress(address)
+	if err != nil {
+		fmt.Println(err)
+	}
+	c.IndentedJSON(http.StatusOK, actorAddress)
+}
+
 func signTxs(c *gin.Context) {
 	account := c.Param("account")
 	//nick := c.Query("nick")
@@ -145,7 +155,7 @@ func signTxs(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, txs)
 }
 
-func getMessage(c *gin.Context) {
+func getApproveMessage(c *gin.Context) {
 	json := make(map[string]interface{})
 	c.BindJSON(&json)
 	multiAddr := json["multiAddr"]
@@ -157,6 +167,82 @@ func getMessage(c *gin.Context) {
 		stxId = strconv.FormatFloat(fNum, 'f', 0, 64)
 	}
 	err, message := msig.GetMessage(from.(string), multiAddr.(string), stxId)
+
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	post := gin.H{
+		"message": message,
+	}
+	c.JSON(http.StatusOK, post)
+}
+
+func getProposeTransferMessage(c *gin.Context) {
+	json := make(map[string]interface{})
+	err := c.BindJSON(&json)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+	from := json["from"]
+	mts := json["mts"]
+	accept := json["accept"]
+	filAmount := json["fil"]
+	strFil := ""
+	if fNum, ok := filAmount.(float64); ok {
+		if fNum < minFil {
+			c.JSON(http.StatusBadGateway, gin.H{
+				"message": fmt.Sprintf("最小转账金额：%f", minFil),
+			})
+			return
+		}
+		strFil = strconv.FormatFloat(fNum, 'f', -1, 64)
+	}
+	err, message := msig.ProposeTransferMessage(from.(string), mts.(string), accept.(string), strFil)
+
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	post := gin.H{
+		"message": message,
+	}
+	c.JSON(http.StatusOK, post)
+}
+
+func getProposeWithdrawMessage(c *gin.Context) {
+	json := make(map[string]interface{})
+	err := c.BindJSON(&json)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+	from := json["from"]
+	mts := json["mts"]
+	miner := json["miner"]
+	filAmount := json["fil"]
+	strFil := ""
+	if fNum, ok := filAmount.(float64); ok {
+		if fNum < minFil {
+			c.JSON(http.StatusBadGateway, gin.H{
+				"message": fmt.Sprintf("最小提现金额：%f", minFil),
+			})
+			return
+		}
+		strFil = strconv.FormatFloat(fNum, 'f', -1, 64)
+	}
+	err, message := msig.ProposeWithdrawMessage(from.(string), mts.(string), miner.(string), strFil)
 
 	if err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{

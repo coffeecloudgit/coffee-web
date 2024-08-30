@@ -313,6 +313,8 @@ github.com/cockroachdb/datadriven v0.0.0-20190809214429-80d97fb3cbaa/go.mod h1:z
 github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd/go.mod h1:sE/e/2PUdi/liOCUjSTXgM1o87ZssimdTWN964YiIeI=
 github.com/coffeecloudgit/filecoin-wallet-signing v1.0.1 h1:sxW7DkZOYTRE+A9fcIeR0ksm25UFM0mXzj5Pn64zBPA=
 github.com/coffeecloudgit/filecoin-wallet-signing v1.0.1/go.mod h1:bRTzeZjcBtc/hdjRSFeom0GMjptWxijSha1DVZCeDTM=
+github.com/coffeecloudgit/filecoin-wallet-signing v1.0.2/go.mod h1:bRTzeZjcBtc/hdjRSFeom0GMjptWxijSha1DVZCeDTM=
+github.com/coffeecloudgit/filecoin-wallet-signing v1.0.3/go.mod h1:bRTzeZjcBtc/hdjRSFeom0GMjptWxijSha1DVZCeDTM=
 github.com/containerd/cgroups v0.0.0-20201119153540-4cbc285b3327/go.mod h1:ZJeTFisyysqgcCdecO57Dj79RfL0LNeGiFUqLYQRYLE=
 github.com/containerd/cgroups v1.0.3/go.mod h1:/ofk34relqNjSGyqPrmEULrO4Sc8LJhvJmWbUCUKqj8=
 github.com/containerd/cgroups v1.0.4 h1:jN/mbWBEaz+T1pi5OFtnkQ+8qnmEbAr1Oo1FRm5B0dA=

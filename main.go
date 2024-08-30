@@ -2,17 +2,45 @@ package main
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"log"
 	"os"
 	"runtime"
-
-	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	//ConfigRuntime()
 	//StartWorkers()
 	StartGin()
+}
+
+// StartGin starts gin web server with setting router.
+func StartGin() {
+	gin.SetMode(gin.DebugMode)
+	//gin.New("output").Delims("{%", "%}")
+
+	router := gin.New()
+	router.Use(rateLimit, gin.Recovery())
+	//router.LoadHTMLGlob("resources/*.templ.html")
+	//router.Static("/static", "resources/static")
+	//router.GET("/", index)
+	router.GET("/sign/:account", signGET)
+	router.POST("/sign/actor/:address", signActorAddress)
+	router.POST("/sign/txs/:account", signTxs)
+
+	router.POST("/sign/pushTx", pushTx)
+	router.POST("/sign/account/balance/:account", getAccountBalance)
+	router.POST("/sign/propose-transfer-message", getProposeTransferMessage)
+	router.POST("/sign/propose-withdraw-message", getProposeWithdrawMessage)
+	router.POST("/sign/get-approve-message", getApproveMessage)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8088"
+	}
+	if err := router.Run(":" + port); err != nil {
+		log.Panicf("error: %s", err)
+	}
 }
 
 // ConfigRuntime sets the number of operating system threads.
@@ -25,36 +53,4 @@ func ConfigRuntime() {
 // StartWorkers start starsWorker by goroutine.
 func StartWorkers() {
 	go statsWorker()
-}
-
-// StartGin starts gin web server with setting router.
-func StartGin() {
-	gin.SetMode(gin.DebugMode)
-	//gin.New("output").Delims("{%", "%}")
-
-	router := gin.New()
-	router.Use(rateLimit, gin.Recovery())
-	router.LoadHTMLGlob("resources/*.templ.html")
-	router.Static("/static", "resources/static")
-	router.GET("/", index)
-	//router.GET("/room/:roomid", roomGET)
-	//router.POST("/room-post/:roomid", roomPOST)
-	//router.GET("/stream/:roomid", streamRoom)
-
-	router.GET("/sign/:account", signGET)
-
-	router.POST("/sign/txs/:account", signTxs)
-
-	router.POST("/sign/get-message", getMessage)
-	router.POST("/sign/pushTx", pushTx)
-
-	router.POST("/sign/account/balance/:account", getAccountBalance)
-
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8088"
-	}
-	if err := router.Run(":" + port); err != nil {
-		log.Panicf("error: %s", err)
-	}
 }

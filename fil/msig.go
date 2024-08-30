@@ -22,3 +22,7 @@ func BigIntToDecimals(amount *types.BigInt) decimal.Decimal {
 	}
 	return decimal.NewFromBigInt(amount.Int, 0).Shift(-decimals)
 }
+
+func GetActorAddress(address string) (map[string]interface{}, error) {
+	return msig.GetActorAddress(address)
+}
