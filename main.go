@@ -17,21 +17,23 @@ func main() {
 // StartGin starts gin web server with setting router.
 func StartGin() {
 	gin.SetMode(gin.DebugMode)
-	//gin.New("output").Delims("{%", "%}")
-
 	router := gin.New()
 	router.Use(rateLimit, gin.Recovery())
 	//router.LoadHTMLGlob("resources/*.templ.html")
 	//router.Static("/static", "resources/static")
-	//router.GET("/", index)
 	router.GET("/sign/:account", signGET)
 	router.POST("/sign/actor/:address", signActorAddress)
-	router.POST("/sign/txs/:account", signTxs)
+	router.POST("/sign/multi-account-info/:account", multiAccountInfo)
 
 	router.POST("/sign/pushTx", pushTx)
-	router.POST("/sign/account/balance/:account", getAccountBalance)
+	router.POST("/sign/account/info/:account", getAccountInfo)
+
+	router.POST("/sign/create-message", getCreateMessage)
 	router.POST("/sign/propose-transfer-message", getProposeTransferMessage)
 	router.POST("/sign/propose-withdraw-message", getProposeWithdrawMessage)
+	router.POST("/sign/propose-add-signer-message", getProposeAddSignerMessage)
+	router.POST("/sign/propose-remove-signer-message", getProposeRemoveSignerMessage)
+	router.POST("/sign/propose-change-threshold-message", getProposeChangeThresholdMessage)
 	router.POST("/sign/get-approve-message", getApproveMessage)
 
 	port := os.Getenv("PORT")

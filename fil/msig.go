@@ -8,12 +8,12 @@ import (
 
 var decimals int32 = 18
 
-func GetMultiSigPendingTxs(account string) ([]msig.MultiSignTx, error) {
-	return msig.GetMultiSigPendingTxs(account)
+func GetMultiAccountInfo(account string) (*msig.MultiAccountInfo, error) {
+	return msig.GetMultiAccountInfo(account)
 }
 
-func GetAccountBalance(account string) (*types.BigInt, *types.TipSet, error) {
-	return msig.GetAccountBalance(account)
+func GetAccountInfo(account string) (*msig.AccountInfo, error) {
+	return msig.GetAccountInfo(account)
 }
 
 func BigIntToDecimals(amount *types.BigInt) decimal.Decimal {

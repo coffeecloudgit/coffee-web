@@ -127,32 +127,80 @@ func signActorAddress(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, actorAddress)
 }
 
-func signTxs(c *gin.Context) {
+func multiAccountInfo(c *gin.Context) {
 	account := c.Param("account")
 	//nick := c.Query("nick")
-	txs, err := fil.GetMultiSigPendingTxs(account)
+	accountInfo, err := fil.GetMultiAccountInfo(account)
 
 	if err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{})
 		return
 	}
 
-	if txs == nil {
+	if accountInfo.MultiSignTxs == nil {
 		nullTxs := make([]msig.MultiSignTx, 0)
-		txs = nullTxs
+		accountInfo.MultiSignTxs = nullTxs
 	}
 
-	for i := 0; i < len(txs); i++ {
-		key := fmt.Sprintf("%s_%d", account, txs[i].Id)
+	for i := 0; i < len(accountInfo.MultiSignTxs); i++ {
+		key := fmt.Sprintf("%s_%d", account, accountInfo.MultiSignTxs[i].Id)
 		if v, ok := signedTxMaps[key]; ok {
-			txs[i].TxId = v
+			accountInfo.MultiSignTxs[i].TxId = v
 		}
 	}
 
-	sort.Slice(txs, func(i, j int) bool {
-		return txs[i].Id > txs[j].Id
+	sort.Slice(accountInfo.MultiSignTxs, func(i, j int) bool {
+		return accountInfo.MultiSignTxs[i].Id > accountInfo.MultiSignTxs[j].Id
 	})
-	c.IndentedJSON(http.StatusOK, txs)
+	c.IndentedJSON(http.StatusOK, accountInfo)
+}
+
+func getCreateMessage(c *gin.Context) {
+	json := make(map[string]interface{})
+	c.BindJSON(&json)
+	from := json["from"]
+	addresses := json["addresses"]
+	threshold := json["threshold"]
+
+	var fromStr = ""
+	var addressesStr = ""
+	var thresholdStr = ""
+	var ok = true
+
+	if fromStr, ok = from.(string); !ok {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "from error",
+		})
+		return
+	}
+
+	if addressesStr, ok = addresses.(string); !ok {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "addresses error",
+		})
+		return
+	}
+
+	if thresholdStr, ok = threshold.(string); !ok {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "threshold error",
+		})
+		return
+	}
+
+	err, message := msig.CreateMessage(fromStr, addressesStr, thresholdStr)
+
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	post := gin.H{
+		"message": message,
+	}
+	c.JSON(http.StatusOK, post)
 }
 
 func getApproveMessage(c *gin.Context) {
@@ -219,6 +267,176 @@ func getProposeTransferMessage(c *gin.Context) {
 	c.JSON(http.StatusOK, post)
 }
 
+func getProposeAddSignerMessage(c *gin.Context) {
+	json := make(map[string]interface{})
+	err := c.BindJSON(&json)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+	from := json["from"]
+	mts := json["mts"]
+	address := json["address"]
+
+	var fromStr = ""
+	var mtsStr = ""
+	var addressStr = ""
+	var ok = true
+
+	if fromStr, ok = from.(string); !ok {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "from error",
+		})
+		return
+	}
+
+	if mtsStr, ok = mts.(string); !ok {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "MultiAddr error",
+		})
+		return
+	}
+
+	if addressStr, ok = address.(string); !ok {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "edite address error",
+		})
+		return
+	}
+
+	err, message := msig.ProposeAddSignerMessage(fromStr, mtsStr, addressStr, false)
+
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	post := gin.H{
+		"message": message,
+	}
+	c.JSON(http.StatusOK, post)
+}
+
+func getProposeRemoveSignerMessage(c *gin.Context) {
+	json := make(map[string]interface{})
+	err := c.BindJSON(&json)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+	from := json["from"]
+	mts := json["mts"]
+	address := json["address"]
+
+	var fromStr = ""
+	var mtsStr = ""
+	var addressStr = ""
+	var ok = true
+
+	if fromStr, ok = from.(string); !ok {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "from error",
+		})
+		return
+	}
+
+	if mtsStr, ok = mts.(string); !ok {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "MultiAddr error",
+		})
+		return
+	}
+
+	if addressStr, ok = address.(string); !ok {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "remove address error",
+		})
+		return
+	}
+
+	err, message := msig.ProposeRemoveSignerMessage(fromStr, mtsStr, addressStr, false)
+
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	post := gin.H{
+		"message": message,
+	}
+	c.JSON(http.StatusOK, post)
+}
+
+func getProposeChangeThresholdMessage(c *gin.Context) {
+	json := make(map[string]interface{})
+	err := c.BindJSON(&json)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+	from := json["from"]
+	mts := json["mts"]
+	threshold := json["threshold"]
+
+	var fromStr = ""
+	var mtsStr = ""
+	var thresholdStr = ""
+	var thresholdInt = uint64(0)
+	var ok = true
+
+	if fromStr, ok = from.(string); !ok {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "from error",
+		})
+		return
+	}
+
+	if mtsStr, ok = mts.(string); !ok {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "MultiAddr error",
+		})
+		return
+	}
+
+	if thresholdStr, ok = threshold.(string); !ok {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "threshold error",
+		})
+		return
+	}
+
+	if thresholdInt, err = strconv.ParseUint(thresholdStr, 10, 64); err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "threshold error",
+		})
+		return
+	}
+
+	err, message := msig.ProposeChangeThresholdMessage(fromStr, mtsStr, thresholdInt)
+
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	post := gin.H{
+		"message": message,
+	}
+	c.JSON(http.StatusOK, post)
+}
+
 func getProposeWithdrawMessage(c *gin.Context) {
 	json := make(map[string]interface{})
 	err := c.BindJSON(&json)
@@ -259,13 +477,61 @@ func getProposeWithdrawMessage(c *gin.Context) {
 
 func pushTx(c *gin.Context) {
 	json := make(map[string]interface{})
-	c.BindJSON(&json)
+	err := c.BindJSON(&json)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
 	message := json["message"]
 	signature := json["signature"]
-	account := json["account"].(string)
-	id := json["id"].(string)
+	account := json["account"]
+	id := json["id"]
+	from := json["from"]
 
-	err, result := msig.PushTx(message.(string), signature.(string))
+	var messageStr = ""
+	var signatureStr = ""
+	var accountStr = ""
+	var idStr = ""
+	var fromStr = ""
+	var ok = true
+
+	if messageStr, ok = message.(string); !ok {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "message error",
+		})
+		return
+	}
+	if signatureStr, ok = signature.(string); !ok {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "signature error",
+		})
+		return
+	}
+	if accountStr, ok = account.(string); !ok {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "account error",
+		})
+		return
+	}
+
+	if idStr, ok = id.(string); !ok {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "id error",
+		})
+		return
+	}
+
+	if fromStr, ok = from.(string); !ok {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "from error",
+		})
+		return
+	}
+
+	err, result := msig.PushTx(messageStr, signatureStr)
 
 	if err != nil {
 		fmt.Println(err)
@@ -275,8 +541,8 @@ func pushTx(c *gin.Context) {
 		return
 	}
 
-	key := fmt.Sprintf("%s_%s", account, id)
-	signedTxMaps[key] = result
+	key := fmt.Sprintf("%s_%s", accountStr, idStr)
+	signedTxMaps[key] = fmt.Sprintf("%s_%s", fromStr, result)
 
 	post := gin.H{
 		"message": result,
@@ -284,24 +550,23 @@ func pushTx(c *gin.Context) {
 	c.JSON(http.StatusOK, post)
 }
 
-func getAccountBalance(c *gin.Context) {
-	//json := make(map[string]interface{})
-	//c.BindJSON(&json)
-	//account := json["account"]
+func getAccountInfo(c *gin.Context) {
 	account := c.Param("account")
 
-	balance, tipSet, err := msig.GetAccountBalance(account)
+	accountInfo, err := msig.GetAccountInfo(account)
 
 	if err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{
-			"message": "error",
+			"message": "error:" + err.Error(),
 		})
 		return
 	}
-	decimal := fil.BigIntToDecimals(balance)
+	decimal := fil.BigIntToDecimals(&accountInfo.Balance)
 	post := gin.H{
+		"id":      accountInfo.Id,
+		"address": account,
 		"balance": decimal,
-		"height":  tipSet.Height().String(),
+		"height":  accountInfo.Height.String(),
 	}
 	c.JSON(http.StatusOK, post)
 }
