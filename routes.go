@@ -157,7 +157,13 @@ func multiAccountInfo(c *gin.Context) {
 
 func getCreateMessage(c *gin.Context) {
 	json := make(map[string]interface{})
-	c.BindJSON(&json)
+	err := c.BindJSON(&json)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "参数错误",
+		})
+		return
+	}
 	from := json["from"]
 	addresses := json["addresses"]
 	threshold := json["threshold"]
@@ -205,16 +211,86 @@ func getCreateMessage(c *gin.Context) {
 
 func getApproveMessage(c *gin.Context) {
 	json := make(map[string]interface{})
-	c.BindJSON(&json)
-	multiAddr := json["multiAddr"]
+	err := c.BindJSON(&json)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "参数错误",
+		})
+		return
+	}
 
+	multiAddr := json["multiAddr"]
 	txId := json["txId"]
 	from := json["from"]
 	stxId := ""
+	fromStr := ""
+	multiAddrStr := ""
+	ok := false
+	if fromStr, ok = from.(string); !ok {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "from参数错误",
+		})
+		return
+	}
+	if multiAddrStr, ok = multiAddr.(string); !ok {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "multiAddr参数错误",
+		})
+		return
+	}
+
 	if fNum, ok := txId.(float64); ok {
 		stxId = strconv.FormatFloat(fNum, 'f', 0, 64)
 	}
-	err, message := msig.GetMessage(from.(string), multiAddr.(string), stxId)
+	err, message := msig.GetMessage(fromStr, multiAddrStr, stxId)
+
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	post := gin.H{
+		"message": message,
+	}
+	c.JSON(http.StatusOK, post)
+}
+
+func getCancelProposalMessage(c *gin.Context) {
+	json := make(map[string]interface{})
+	err := c.BindJSON(&json)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "参数错误",
+		})
+		return
+	}
+
+	multiAddr := json["multiAddr"]
+	txId := json["txId"]
+	from := json["from"]
+	stxId := ""
+	fromStr := ""
+	multiAddrStr := ""
+	ok := false
+	if fromStr, ok = from.(string); !ok {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "from参数错误",
+		})
+		return
+	}
+	if multiAddrStr, ok = multiAddr.(string); !ok {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"message": "multiAddr参数错误",
+		})
+		return
+	}
+
+	if fNum, ok := txId.(float64); ok {
+		stxId = strconv.FormatFloat(fNum, 'f', 0, 64)
+	}
+	err, message := msig.GetCancelMessage(fromStr, multiAddrStr, stxId)
 
 	if err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{

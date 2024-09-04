@@ -35,6 +35,7 @@ func StartGin() {
 	router.POST("/sign/propose-remove-signer-message", getProposeRemoveSignerMessage)
 	router.POST("/sign/propose-change-threshold-message", getProposeChangeThresholdMessage)
 	router.POST("/sign/get-approve-message", getApproveMessage)
+	router.POST("/sign/get-cancel-proposal-message", getCancelProposalMessage)
 
 	port := os.Getenv("PORT")
 	if port == "" {
