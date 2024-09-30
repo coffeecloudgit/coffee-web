@@ -24,10 +24,8 @@ func rateLimit(c *gin.Context) {
 	if value%50 == 0 {
 		fmt.Printf("ip: %s, count: %d\n", ip, value)
 	}
-	if value >= 200 {
-		if value%200 == 0 {
-			fmt.Println("ip blocked")
-		}
+	if value >= 800 {
+		fmt.Println("ip blocked:", value)
 		c.Abort()
 		c.String(http.StatusServiceUnavailable, "you were automatically banned :)")
 	}
